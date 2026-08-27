@@ -64,9 +64,26 @@ Click a row to get here. It confirms the detail read path works end to end:
 - **Header** — avatar, name, and `Job title at Company`, with **Edit**
   (`/contacts/[id]/edit`) and a destructive **Delete** that asks before it acts.
 - **Field table** — email and phone rendered as `mailto:` / `tel:` links, then
-  company, job title, address, and notes. Empty optional fields show `—` rather
-  than collapsing, so the shape of the record stays readable.
+  company, job title, addresses, and notes. Empty optional fields show `—`
+  rather than collapsing, so the shape of the record stays readable.
+- **Addresses** — grouped by type in Home → Work → Other order, each group
+  labelled with a pill. A contact may hold several of the same type, so a group
+  lists them all.
 - **Metadata table** — `ID`, `Created`, and `Last updated` in UTC, monospaced.
+
+### Addresses
+
+A contact has many addresses, so the form carries a repeatable list rather than
+a fixed set of inputs:
+
+- **Add address** appends a row; each row has its own Home/Work/Other select and
+  its own **Remove**. Up to 20, matching the API.
+- Every part submits under a repeated name (`address_city`, …), so the
+  collection travels as ordinary form encoding — no JSON smuggled through a
+  hidden field — and `formDataToValues` zips the columns back into rows.
+- A row added and left blank is dropped rather than reported: changing your mind
+  is not a mistake. An address that has *something* in it is validated properly,
+  and the error names the row it came from.
 
 ### Contact photos
 
@@ -120,6 +137,7 @@ src/app/contacts/         Detail, edit, create routes and the server actions
 src/components/contacts/  Feature components (table, toolbar, form, avatar…)
 src/components/ui/        Button, Field, and PhotoField primitives
 src/lib/contacts/         Types, Zod schema, photo rules, API access, query helpers
+src/components/contacts/AddressesField.tsx  The repeatable address list
 src/lib/apiClient.ts      fetch wrapper: base URL, ApiError, ApiUnreachableError
 src/__tests__/            Jest tests + MSW handlers, mirroring the src/ tree
 e2e/                      Playwright specs (run against the real API)
