@@ -49,4 +49,5 @@ test('downloads a contact as a vCard carrying every address', async ({ page }) =
 
   await page.getByRole('button', { name: `Delete ${fullName}` }).click()
   await page.getByRole('button', { name: `Confirm deleting ${fullName}` }).click()
+  await expect(page).toHaveURL(/\/contacts\/?(\?.*)?$/)
 })
