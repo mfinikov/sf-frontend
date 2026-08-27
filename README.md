@@ -61,6 +61,7 @@ just means an empty database, not a broken app.
 Click a row to get here. It confirms the detail read path works end to end:
 
 - **`< All contacts`** back link to the list.
+- **vCard** downloads the contact as a `.vcf` — see below.
 - **Header** — avatar, name, and `Job title at Company`, with **Edit**
   (`/contacts/[id]/edit`) and a destructive **Delete** that asks before it acts.
 - **Field table** — email and phone rendered as `mailto:` / `tel:` links, then
@@ -84,6 +85,20 @@ a fixed set of inputs:
 - A row added and left blank is dropped rather than reported: changing your mind
   is not a mistake. An address that has *something* in it is validated properly,
   and the error names the row it came from.
+
+### vCard export
+
+**vCard** on the detail page downloads the contact as a `.vcf` that opens
+straight into Apple Contacts, Google Contacts, or Outlook.
+
+`GET /contacts/[id]/vcard` is a route handler, so it is a plain URL the browser
+can navigate to, and the file is built on the server — the photo never has to be
+re-encoded in the client. `src/lib/contacts/vcard.ts` holds the serialisation:
+vCard 3.0 (the version every importer accepts), CRLF endings, escaped
+separators, and RFC 2426 line folding counted in octets rather than characters.
+
+Every address is exported with its own `ADR;TYPE=`, so a contact with two
+offices arrives with both.
 
 ### Contact photos
 
@@ -136,7 +151,7 @@ src/app/contacts/(list)/  List page + its loading skeleton
 src/app/contacts/         Detail, edit, create routes and the server actions
 src/components/contacts/  Feature components (table, toolbar, form, avatar…)
 src/components/ui/        Button, Field, and PhotoField primitives
-src/lib/contacts/         Types, Zod schema, photo rules, API access, query helpers
+src/lib/contacts/         Types, Zod schema, photo/vCard rules, API access, queries
 src/components/contacts/AddressesField.tsx  The repeatable address list
 src/lib/apiClient.ts      fetch wrapper: base URL, ApiError, ApiUnreachableError
 src/__tests__/            Jest tests + MSW handlers, mirroring the src/ tree
