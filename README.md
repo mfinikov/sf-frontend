@@ -42,8 +42,9 @@ The landing route (`/` redirects here). What to check, top to bottom:
   selector. Both write to the URL, so the state survives a reload and is
   shareable.
 - **Table** — sortable `Name` and `Email` headers (the arrow shows the active
-  column and direction), an initials avatar per row, `Job title at Company` as
-  the subtitle, and per-row pencil (edit) and trash (delete) actions.
+  column and direction), a circular avatar per row — the contact's photo, or
+  their initials when they have none — `Job title at Company` as the subtitle,
+  and per-row pencil (edit) and trash (delete) actions.
 - **Footer row** — `Showing 1–3 of 3` with Previous/Next, both disabled on a
   single page.
 - **Version stamp** — `web v0.1.0 (build 2 · 8ce2dc0)` at the bottom of every
@@ -66,6 +67,21 @@ Click a row to get here. It confirms the detail read path works end to end:
   company, job title, address, and notes. Empty optional fields show `—` rather
   than collapsing, so the shape of the record stays readable.
 - **Metadata table** — `ID`, `Created`, and `Last updated` in UTC, monospaced.
+
+### Contact photos
+
+The create/edit form has a photo picker. Everything happens in the browser
+before the form is submitted:
+
+- the file is centre-cropped to a square and resized to 512px, then encoded as
+  JPEG — a multi-megabyte camera photo lands around 60 KB, which keeps the list
+  response small even though every row carries its avatar inline;
+- JPEG, PNG, GIF, and WebP are accepted; the limits in
+  `src/lib/contacts/photo.ts` mirror the API's, so a bad image is reported
+  without a round trip;
+- the value rides in a hidden input, so editing a contact carries the existing
+  photo through the `PUT` instead of clearing it;
+- **Remove photo** clears it, and the avatar falls back to initials.
 
 Hand-editing the URL to an ID that does not exist gives you the styled 404 page
 (`src/app/not-found.tsx`), not a stack trace — that is also worth a quick try.
@@ -102,8 +118,8 @@ Hand-editing the URL to an ID that does not exist gives you the styled 404 page
 src/app/contacts/(list)/  List page + its loading skeleton
 src/app/contacts/         Detail, edit, create routes and the server actions
 src/components/contacts/  Feature components (table, toolbar, form, avatar…)
-src/components/ui/        Button and Field primitives
-src/lib/contacts/         Types, Zod schema, API access, URL query helpers
+src/components/ui/        Button, Field, and PhotoField primitives
+src/lib/contacts/         Types, Zod schema, photo rules, API access, query helpers
 src/lib/apiClient.ts      fetch wrapper: base URL, ApiError, ApiUnreachableError
 src/__tests__/            Jest tests + MSW handlers, mirroring the src/ tree
 e2e/                      Playwright specs (run against the real API)
