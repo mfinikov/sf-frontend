@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useMemo } from "react";
 import { useFormStatus } from "react-dom";
 import Link from "next/link";
 import { AlertCircle, Loader2 } from "lucide-react";
@@ -56,9 +56,13 @@ export default function ContactForm({
   }
 
   // A failed submit echoes the rows back so nothing typed is lost; otherwise
-  // the addresses come from the contact being edited.
-  const addressRows =
-    state.values?.addresses ?? toRawAddresses(contact?.addresses ?? []);
+  // the addresses come from the contact being edited. Memoised because
+  // AddressesField re-seeds itself when this array's identity changes, which
+  // must mean "a new form state arrived", not "the form re-rendered".
+  const addressRows = useMemo(
+    () => state.values?.addresses ?? toRawAddresses(contact?.addresses ?? []),
+    [state.values?.addresses, contact?.addresses],
+  );
 
   return (
     <form action={formAction} noValidate className="space-y-8">

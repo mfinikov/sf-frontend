@@ -66,6 +66,47 @@ test.describe('Contact addresses', () => {
     await page.getByRole('button', { name: `Confirm deleting ${fullName}` }).click()
   })
 
+  test('a rejected submit keeps every row the user typed', async ({ page }) => {
+    const email = `keep-${Date.now()}-${Math.floor(Math.random() * 1e6)}@example.com`
+    const last = `Keep${Date.now().toString().slice(-6)}`
+
+    // Take the email first, so the second submit is guaranteed to be rejected.
+    await page.goto('/contacts/new')
+    await page.getByLabel('First name').fill('First')
+    await page.getByLabel('Last name').fill(last)
+    await page.getByLabel('Email', { exact: false }).first().fill(email)
+    await page.getByRole('button', { name: 'Create contact' }).click()
+    await expect(
+      page.getByRole('heading', { level: 1, name: `First ${last}` }),
+    ).toBeVisible()
+
+    await page.goto('/contacts/new')
+    await page.getByLabel('First name').fill('Second')
+    await page.getByLabel('Last name').fill(last)
+    await page.getByLabel('Email', { exact: false }).first().fill(email)
+
+    await page.getByRole('button', { name: 'Add address' }).click()
+    await page.getByLabel('Address 1 type').selectOption('Work')
+    await page.getByLabel('Address 1 city').fill('San Francisco')
+    await page.getByRole('button', { name: 'Add address' }).click()
+    await page.getByLabel('Address 2 city').fill('London')
+
+    await page.getByRole('button', { name: 'Create contact' }).click()
+    await expect(page.getByText(/already/i).first()).toBeVisible()
+
+    // React resets the form once the action resolves. Both rows — and the type
+    // select, which a reset drops back to its first option — must come back.
+    await expect(page.getByLabel('Address 1 type')).toHaveValue('Work')
+    await expect(page.getByLabel('Address 1 city')).toHaveValue('San Francisco')
+    await expect(page.getByLabel('Address 2 type')).toHaveValue('Home')
+    await expect(page.getByLabel('Address 2 city')).toHaveValue('London')
+
+    await page.goto(`/contacts?q=${last}`)
+    await page.getByRole('link', { name: `First ${last}`, exact: true }).click()
+    await page.getByRole('button', { name: `Delete First ${last}` }).click()
+    await page.getByRole('button', { name: `Confirm deleting First ${last}` }).click()
+  })
+
   test('a row left blank is dropped rather than rejected', async ({ page }) => {
     const email = uniqueEmail('blank')
     const last = `Blank${Date.now().toString().slice(-6)}`

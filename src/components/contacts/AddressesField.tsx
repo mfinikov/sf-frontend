@@ -2,7 +2,12 @@
 
 import { useId, useState } from "react";
 import { MapPin, Plus, Trash2 } from "lucide-react";
-import { ADDRESS_TYPES, type AddressType, type RawAddress } from "@/lib/contacts/types";
+import {
+  ADDRESS_TYPES,
+  type AddressInput,
+  type AddressType,
+  type RawAddress,
+} from "@/lib/contacts/types";
 import { MAX_ADDRESSES, addressInputName } from "@/lib/contacts/schema";
 
 const CONTROL =
@@ -31,8 +36,12 @@ function toRows(addresses: readonly RawAddress[]): Row[] {
  *
  * Every part submits under a repeated name (`address_city`, …), so the whole
  * collection travels as ordinary form encoding and `formDataToValues` zips the
- * columns back into rows. The inputs are uncontrolled — React only owns which
- * rows exist, which keeps typing out of the render path.
+ * columns back into rows.
+ *
+ * React owns which rows exist; the DOM owns what is typed in them. That keeps
+ * typing out of the render path, and it is what survives the form reset React
+ * performs once the action resolves — a reset restores each control to its
+ * `defaultValue`, which `seed` keeps pointed at the echoed values.
  */
 export default function AddressesField({
   defaultValue,
@@ -44,6 +53,20 @@ export default function AddressesField({
   const groupId = useId();
   const [rows, setRows] = useState<Row[]>(() => toRows(defaultValue));
   const [nextKey, setNextKey] = useState(defaultValue.length);
+  const [seed, setSeed] = useState(defaultValue);
+  const [generation, setGeneration] = useState(0);
+
+  // React resets a form once its action resolves, and it does not restore a
+  // `<select>` afterwards — the element silently falls back to its first option
+  // while React still believes the old value is rendered. A rejected submit
+  // echoes the rows back, so re-seed from them and bump the generation, which
+  // remounts the rows and rebuilds the DOM from state rather than trusting it.
+  if (seed !== defaultValue) {
+    setSeed(defaultValue);
+    setRows(toRows(defaultValue));
+    setNextKey(defaultValue.length);
+    setGeneration((current) => current + 1);
+  }
 
   const errorId = `${groupId}-error`;
   const atLimit = rows.length >= MAX_ADDRESSES;
@@ -68,7 +91,7 @@ export default function AddressesField({
 
       {rows.map((row, index) => (
         <fieldset
-          key={row.key}
+          key={`${generation}-${row.key}`}
           className="space-y-3 rounded-lg border border-border bg-card/40 p-3"
         >
           <legend className="sr-only">Address {index + 1}</legend>
@@ -190,7 +213,7 @@ function Part({
   wide,
 }: {
   id: string;
-  part: Parameters<typeof addressInputName>[0];
+  part: keyof AddressInput;
   label: string;
   defaultValue: string;
   placeholder: string;
