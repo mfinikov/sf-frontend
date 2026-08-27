@@ -64,6 +64,7 @@ test.describe('Contact addresses', () => {
 
     await page.getByRole('button', { name: `Delete ${fullName}` }).click()
     await page.getByRole('button', { name: `Confirm deleting ${fullName}` }).click()
+    await expect(page).toHaveURL(/\/contacts\/?(\?.*)?$/)
   })
 
   test('a rejected submit keeps every row the user typed', async ({ page }) => {
@@ -105,6 +106,7 @@ test.describe('Contact addresses', () => {
     await page.getByRole('link', { name: `First ${last}`, exact: true }).click()
     await page.getByRole('button', { name: `Delete First ${last}` }).click()
     await page.getByRole('button', { name: `Confirm deleting First ${last}` }).click()
+    await expect(page).toHaveURL(/\/contacts\/?(\?.*)?$/)
   })
 
   test('a row left blank is dropped rather than rejected', async ({ page }) => {
@@ -131,5 +133,6 @@ test.describe('Contact addresses', () => {
 
     await page.getByRole('button', { name: `Delete ${fullName}` }).click()
     await page.getByRole('button', { name: `Confirm deleting ${fullName}` }).click()
+    await expect(page).toHaveURL(/\/contacts\/?(\?.*)?$/)
   })
 })
