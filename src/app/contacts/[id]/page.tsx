@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronLeft, Pencil } from "lucide-react";
+import { ChevronLeft, Download, Pencil } from "lucide-react";
 import ContactAvatar from "@/components/contacts/ContactAvatar";
 import DeleteContactButton from "@/components/contacts/DeleteContactButton";
 import { buttonClasses } from "@/components/ui/Button";
@@ -74,6 +74,14 @@ export default async function ContactDetailPage({ params }: PageProps) {
         </div>
 
         <div className="flex items-center gap-2">
+          <a
+            href={`/contacts/${contact.id}/vcard`}
+            download
+            className={buttonClasses("secondary")}
+          >
+            <Download className="h-4 w-4" strokeWidth={1.75} aria-hidden="true" />
+            vCard
+          </a>
           <Link
             href={`/contacts/${contact.id}/edit`}
             className={buttonClasses("secondary")}
