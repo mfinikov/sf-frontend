@@ -96,22 +96,27 @@ export default function AddressesField({
         >
           <legend className="sr-only">Address {index + 1}</legend>
 
-          <div className="flex items-center gap-2">
-            <label className="sr-only" htmlFor={`${groupId}-type-${row.key}`}>
-              Address {index + 1} type
-            </label>
-            <select
-              id={`${groupId}-type-${row.key}`}
-              name={addressInputName("type")}
-              defaultValue={row.type}
-              className={`${CONTROL} w-auto`}
-            >
-              {ADDRESS_TYPES.map((type: AddressType) => (
-                <option key={type} value={type}>
-                  {type}
-                </option>
-              ))}
-            </select>
+          <div className="flex items-end gap-2">
+            <div>
+              <label
+                className="mb-1.5 block text-[13px] font-medium text-foreground"
+                htmlFor={`${groupId}-type-${row.key}`}
+              >
+                <span className="sr-only">Address {index + 1} </span>Type
+              </label>
+                <select
+                id={`${groupId}-type-${row.key}`}
+                name={addressInputName("type")}
+                defaultValue={row.type}
+                className={`${CONTROL} w-auto`}
+              >
+                {ADDRESS_TYPES.map((type: AddressType) => (
+                  <option key={type} value={type}>
+                    {type}
+                  </option>
+                ))}
+              </select>
+            </div>
 
             <button
               type="button"
@@ -128,7 +133,8 @@ export default function AddressesField({
             <Part
               id={`${groupId}-street-${row.key}`}
               part="street"
-              label={`Address ${index + 1} street`}
+              rowLabel={`Address ${index + 1}`}
+              label="Street address"
               placeholder="1 Market St, Suite 400"
               autoComplete="street-address"
               maxLength={300}
@@ -138,7 +144,8 @@ export default function AddressesField({
             <Part
               id={`${groupId}-city-${row.key}`}
               part="city"
-              label={`Address ${index + 1} city`}
+              rowLabel={`Address ${index + 1}`}
+              label="City"
               placeholder="San Francisco"
               autoComplete="address-level2"
               maxLength={120}
@@ -147,7 +154,8 @@ export default function AddressesField({
             <Part
               id={`${groupId}-state-${row.key}`}
               part="state"
-              label={`Address ${index + 1} state or region`}
+              rowLabel={`Address ${index + 1}`}
+              label="State / region"
               placeholder="CA"
               autoComplete="address-level1"
               maxLength={120}
@@ -156,7 +164,8 @@ export default function AddressesField({
             <Part
               id={`${groupId}-postal-${row.key}`}
               part="postal_code"
-              label={`Address ${index + 1} postal code`}
+              rowLabel={`Address ${index + 1}`}
+              label="Postal code"
               placeholder="94105"
               autoComplete="postal-code"
               maxLength={20}
@@ -165,7 +174,8 @@ export default function AddressesField({
             <Part
               id={`${groupId}-country-${row.key}`}
               part="country"
-              label={`Address ${index + 1} country`}
+              rowLabel={`Address ${index + 1}`}
+              label="Country"
               placeholder="USA"
               autoComplete="country-name"
               maxLength={120}
@@ -200,11 +210,17 @@ export default function AddressesField({
   );
 }
 
-/** One labelled part of an address. The label is visually hidden — the row's
- *  placeholder and position carry the meaning, and the grid stays compact. */
+/**
+ * One labelled part of an address.
+ *
+ * The label is visible, matching every other field on the form; the row number
+ * is folded in for screen readers only, so the accessible name still says which
+ * address it belongs to without repeating "Address 1" five times on screen.
+ */
 function Part({
   id,
   part,
+  rowLabel,
   label,
   defaultValue,
   placeholder,
@@ -214,6 +230,8 @@ function Part({
 }: {
   id: string;
   part: keyof AddressInput;
+  /** Read only by screen readers, so the name says which address this is. */
+  rowLabel: string;
   label: string;
   defaultValue: string;
   placeholder: string;
@@ -223,7 +241,11 @@ function Part({
 }) {
   return (
     <div className={wide ? "sm:col-span-2" : undefined}>
-      <label className="sr-only" htmlFor={id}>
+      <label
+        className="mb-1.5 block text-[13px] font-medium text-muted-foreground"
+        htmlFor={id}
+      >
+        <span className="sr-only">{rowLabel} </span>
         {label}
       </label>
       <input
