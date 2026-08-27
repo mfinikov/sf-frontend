@@ -62,6 +62,9 @@ test.describe('Contact photo', () => {
 
     await page.getByRole('button', { name: `Delete ${fullName}` }).click()
     await page.getByRole('button', { name: `Confirm deleting ${fullName}` }).click()
+    // Wait for the redirect, or the test ends before the delete lands and the
+    // contact is left behind for the next run.
+    await expect(page).toHaveURL(/\/contacts\/?(\?.*)?$/)
   })
 
   test('rejects a file that is not an allowed image', async ({ page }) => {
