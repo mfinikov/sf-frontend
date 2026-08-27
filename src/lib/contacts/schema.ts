@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { PHOTO_ACCEPT, photoProblem } from "./photo";
 import type { ContactInput } from "./types";
 
 /**
@@ -28,6 +29,19 @@ function requiredText(max: number, label: string) {
     .max(max, `${label} must be ${max} characters or fewer`);
 }
 
+/** A data URL from the photo picker, re-checked against the API's own limits. */
+const photo = z
+  .string()
+  .trim()
+  .transform((value) => value || null)
+  .nullable()
+  .default(null)
+  .superRefine((value, ctx) => {
+    if (value === null) return;
+    const problem = photoProblem(value);
+    if (problem) ctx.addIssue({ code: "custom", message: problem });
+  });
+
 export const contactInputSchema = z.object({
   first_name: requiredText(100, "First name"),
   last_name: requiredText(100, "Last name"),
@@ -39,6 +53,7 @@ export const contactInputSchema = z.object({
     .pipe(z.email("Enter a valid email address"))
     .transform((value) => value.toLowerCase()),
   phone: optionalText(40, "Phone"),
+  photo,
   company: optionalText(200, "Company"),
   job_title: optionalText(200, "Job title"),
   address: optionalText(300, "Address"),
@@ -77,11 +92,14 @@ export function zodFieldErrors(
 export interface ContactFieldSpec {
   name: keyof ContactInput;
   label: string;
-  type?: "text" | "email" | "tel" | "textarea";
+  type?: "text" | "email" | "tel" | "textarea" | "photo";
   required?: boolean;
-  maxLength: number;
+  /** Cap for text controls. Omitted for controls that are not free text. */
+  maxLength?: number;
   placeholder?: string;
   autoComplete?: string;
+  /** `accept` list for the photo control. */
+  accept?: string;
   /** Column span inside the section grid. */
   wide?: boolean;
 }
@@ -93,6 +111,19 @@ export interface ContactFieldGroup {
 }
 
 export const CONTACT_FIELD_GROUPS: ContactFieldGroup[] = [
+  {
+    title: "Photo",
+    description: "Shown as a circular avatar. Square images crop best.",
+    fields: [
+      {
+        name: "photo",
+        label: "Profile photo",
+        type: "photo",
+        accept: PHOTO_ACCEPT,
+        wide: true,
+      },
+    ],
+  },
   {
     title: "Identity",
     description: "First name, last name, and email are required.",

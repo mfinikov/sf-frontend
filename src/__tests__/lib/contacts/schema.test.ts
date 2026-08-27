@@ -11,6 +11,7 @@ function values(overrides: Record<string, string> = {}) {
     last_name: "Lovelace",
     email: "Ada@Example.com",
     phone: "",
+    photo: "",
     company: "",
     job_title: "",
     address: "",
@@ -82,5 +83,43 @@ describe("formDataToValues", () => {
     expect(Object.keys(extracted).sort()).toEqual(
       CONTACT_FIELDS.map((field) => field.name).sort(),
     );
+  });
+});
+
+describe("photo", () => {
+  const PNG =
+    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
+
+  it("accepts a base64 image data URL", () => {
+    const parsed = contactInputSchema.parse(values({ photo: PNG }));
+    expect(parsed.photo).toBe(PNG);
+  });
+
+  it("treats an empty picker as no photo", () => {
+    expect(contactInputSchema.parse(values()).photo).toBeNull();
+  });
+
+  it("rejects anything that is not a data URL", () => {
+    const result = contactInputSchema.safeParse(
+      values({ photo: "https://example.com/ada.png" }),
+    );
+    expect(result.success).toBe(false);
+    expect(zodFieldErrors(result.error!).photo).toMatch(/data URL/i);
+  });
+
+  it("rejects SVG, which can carry script", () => {
+    const result = contactInputSchema.safeParse(
+      values({ photo: "data:image/svg+xml;base64,PHN2Zy8+" }),
+    );
+    expect(result.success).toBe(false);
+    expect(zodFieldErrors(result.error!).photo).toMatch(/not a supported image type/i);
+  });
+
+  it("rejects an image over the API's size limit", () => {
+    const oversized = `data:image/png;base64,${"A".repeat(2_000_000)}`;
+    const result = contactInputSchema.safeParse(values({ photo: oversized }));
+
+    expect(result.success).toBe(false);
+    expect(zodFieldErrors(result.error!).photo).toMatch(/KB or smaller/i);
   });
 });
