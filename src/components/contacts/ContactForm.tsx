@@ -4,13 +4,14 @@ import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import Link from "next/link";
 import { AlertCircle, Loader2 } from "lucide-react";
+import AddressesField from "@/components/contacts/AddressesField";
 import Field from "@/components/ui/Field";
 import Button, { buttonClasses } from "@/components/ui/Button";
-import { CONTACT_FIELD_GROUPS } from "@/lib/contacts/schema";
+import { CONTACT_FIELD_GROUPS, toRawAddresses } from "@/lib/contacts/schema";
 import {
   EMPTY_FORM_STATE,
   type Contact,
-  type ContactInput,
+  type ContactTextField,
   type FormState,
 } from "@/lib/contacts/types";
 
@@ -50,9 +51,14 @@ export default function ContactForm({
 }) {
   const [state, formAction] = useActionState(action, EMPTY_FORM_STATE);
 
-  function valueFor(name: keyof ContactInput): string {
+  function valueFor(name: ContactTextField): string {
     return state.values?.[name] ?? contact?.[name] ?? "";
   }
+
+  // A failed submit echoes the rows back so nothing typed is lost; otherwise
+  // the addresses come from the contact being edited.
+  const addressRows =
+    state.values?.addresses ?? toRawAddresses(contact?.addresses ?? []);
 
   return (
     <form action={formAction} noValidate className="space-y-8">
@@ -84,14 +90,23 @@ export default function ContactForm({
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            {group.fields.map((field) => (
-              <Field
-                key={field.name}
-                field={field}
-                defaultValue={valueFor(field.name)}
-                error={state.fieldErrors?.[field.name]}
-              />
-            ))}
+            {group.fields.map((field) =>
+              field.type === "addresses" ? (
+                <div key={field.name} className="sm:col-span-2">
+                  <AddressesField
+                    defaultValue={addressRows}
+                    error={state.fieldErrors?.addresses}
+                  />
+                </div>
+              ) : (
+                <Field
+                  key={field.name}
+                  field={field}
+                  defaultValue={valueFor(field.name)}
+                  error={state.fieldErrors?.[field.name]}
+                />
+              ),
+            )}
           </div>
         </fieldset>
       ))}
